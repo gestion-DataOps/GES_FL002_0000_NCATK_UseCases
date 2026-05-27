@@ -1,0 +1,19 @@
+services:
+  minio-upload-api:
+    build: .
+    container_name: minio-upload-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=tEgEpN1TtA2EHQZ2     
+      - MINIO_SECRET_KEY=Y2LKqem2PzcR546Z6710zLgI8Z4TAXZL      
+      - MINIO_SECURE=false
+      - MINIO_BUCKET=nca-toolkit
+    networks:
+      - airflow-n8n-net
+    restart: unless-stopped
+
+networks:
+  airflow-n8n-net:
+    external: true                          

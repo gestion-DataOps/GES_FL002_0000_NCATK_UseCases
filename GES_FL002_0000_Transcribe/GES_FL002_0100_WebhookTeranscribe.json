@@ -1,0 +1,199 @@
+{
+  "name": "GES_FL002_0100_WebhookTeranscribe",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "transcripe_n8n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -544,
+        -16
+      ],
+      "id": "19896b19-2e48-4ded-bd74-9564a529ce5f",
+      "name": "Webhook",
+      "webhookId": "54b0126c-1c83-4a8f-8bc9-840f44052ed2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nca-toolkit:8080/v1/s3/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_url\": \"{{ $('Webhook').item.json.body.response.srt_url }}\",\n  \"filename\": \"{{ $('Webhook').item.json.query.folder }}/SousTitrage_{{ $('Webhook').item.json.query.folder }}.srt\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "20d7a5aa-7dd4-4b78-9597-7e92488ff27e",
+      "name": "Fichier SRT",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nca-toolkit:8080/v1/s3/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_url\": \"{{ $json.body.response.text_url }}\",\n  \"filename\": \"{{ $json.query.folder }}/transcription_{{ $json.query.folder }}.txt\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -304,
+        -16
+      ],
+      "id": "fb4c7508-1c9c-4ec2-91c1-837d73a02be7",
+      "name": "Fichier txt",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nca-toolkit:8080/v1/s3/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_url\": \"{{ $('Webhook').item.json.body.response.segments_url }}\",\n  \"filename\": \"{{ $('Webhook').item.json.query.folder }}/Segmentation_{{ $('Webhook').item.json.query.folder }}.json\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "824111c3-b774-4e90-a52a-13f91ea14e6e",
+      "name": "Fichier json",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=http://minio-upload-api:8000/cleanup-job?job_id={{ $('Webhook').item.json.body.job_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_url\": \"{{ $('Webhook').item.json.body.response.segments_url }}\",\n  \"filename\": \"{{ $('Webhook').item.json.query.folder }}/Segmentation_{{ $('Webhook').item.json.query.folder }}.json\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "5e25db87-db4a-44ea-ac91-c546d9d3064c",
+      "name": "Suppression des fichiers à la racine",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fichier txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fichier txt": {
+      "main": [
+        [
+          {
+            "node": "Fichier SRT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fichier SRT": {
+      "main": [
+        [
+          {
+            "node": "Fichier json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fichier json": {
+      "main": [
+        [
+          {
+            "node": "Suppression des fichiers à la racine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "38344fd6-b956-428a-b45c-230e425883f7",
+  "meta": {
+    "instanceId": "6fd5a4cd757601a3491f91722185dd0a72691bd6dd9d685efd695c3f8938e728"
+  },
+  "id": "rbqL4lDIJG3sZhY1",
+  "tags": []
+}

@@ -11,7 +11,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        160,
+        -112,
         -16
       ],
       "id": "0e694582-ed21-4102-8448-52e9443558b8",
@@ -33,7 +33,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"media_url\": \"http://minio:9000/nca-toolkit/{{ $('HTTP Request').item.json.object }}\",\n  \"task\": \"transcribe\",\n  \"include_text\": true,\n  \"include_srt\": true,\n  \"include_segments\": true,\n  \"response_type\": \"cloud\"\n}",
+        "jsonBody": "={\n  \"media_url\": \"http://minio:9000/nca-toolkit/{{ $('HTTP Request').item.json.object }}\",\n  \"webhook_url\": \"http://n8n:5678/webhook-test/transcripe_n8n?folder={{ $('HTTP Request').item.json.folder }}\",\n  \"task\": \"transcribe\",\n  \"include_text\": true,\n  \"include_srt\": true,\n  \"include_segments\": true,\n  \"response_type\": \"cloud\"\n}",
         "options": {
           "timeout": 300000
         }
@@ -41,7 +41,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        400,
+        128,
         -16
       ],
       "id": "fa0e1735-fed4-47e4-8c58-bff6b2adbd2f",
@@ -60,7 +60,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -672,
+        -944,
         -16
       ],
       "id": "ce68d71a-4041-4556-8c27-be494eded0d6",
@@ -86,7 +86,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -80,
+        -336,
         -16
       ],
       "id": "e290f3d6-bc63-4b30-85ac-443b0fe70f36",
@@ -100,11 +100,40 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        -368,
+        -640,
         -16
       ],
       "id": "24f73913-a8da-4751-9ddb-4169be52c749",
       "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/home/node/.n8n-files-out/{{ $('HTTP Request').item.json.folder }}.zip",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "da2f7f5b-fc1d-498a-b328-9dfead4fdc25",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "url": "=http://minio-upload-api:8000/download-folder?folder={{ $('HTTP Request').item.json.folder }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        368,
+        -16
+      ],
+      "id": "3db86d93-14ab-407d-a1f0-f765a611aab2",
+      "name": "HTTP Request1"
     }
   ],
   "pinData": {},
@@ -152,6 +181,28 @@
           }
         ]
       ]
+    },
+    "Transcribe Media": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -159,7 +210,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "aafc2191-3ab4-47c8-9c38-21da95368763",
+  "versionId": "609d7231-40d4-4394-9638-125b28f048d4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6fd5a4cd757601a3491f91722185dd0a72691bd6dd9d685efd695c3f8938e728"

@@ -15,6 +15,8 @@ Ce dépôt regroupe les premiers use cases construits autour du **NCA Toolkit**.
 
 L'ensemble est encapsulé dans **Docker**, avec un fichier `.env` à configurer pour personnaliser l'arborescence et les accès. Les fichiers transcrits sont rangés dans une arborescence de sortie dédiée, prête à être exploitée.
 
+Crédits pour la démo n8n : Benjamin Keating : https://www.youtube.com/watch?v=RRqdDC43kSE
+
 ---
 
 ## Objectif

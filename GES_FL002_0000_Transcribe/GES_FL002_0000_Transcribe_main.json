@@ -1,0 +1,381 @@
+{
+  "name": "GES_FL002_0000_Transcribe_main",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://nca-toolkit:8080/v1/toolkit/authenticate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -112,
+        -16
+      ],
+      "id": "0e694582-ed21-4102-8448-52e9443558b8",
+      "name": "Authenticate  NCA Toolkit",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/toolkit/authenticate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nca-toolkit:8080/v1/media/transcribe",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"media_url\": \"http://minio:9000/nca-toolkit/{{ $('HTTP Request').item.json.object }}\",\n  \"webhook_url\": \"http://n8n:5678/webhook/transcribe_n8n?folder={{ $('HTTP Request').item.json.folder }}&resumeUrl={{ $execution.resumeUrl }}\",\n  \"task\": \"transcribe\",\n  \"include_text\": true,\n  \"include_srt\": true,\n  \"include_segments\": true,\n  \"response_type\": \"cloud\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "fa0e1735-fed4-47e4-8c58-bff6b2adbd2f",
+      "name": "Transcribe Media",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://minio-upload-api:8000/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -336,
+        -16
+      ],
+      "id": "e290f3d6-bc63-4b30-85ac-443b0fe70f36",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/.n8n-files/in/*mp4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        0
+      ],
+      "id": "24f73913-a8da-4751-9ddb-4169be52c749",
+      "name": "Read/Write Files from Disk",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "GES_FL002_0000_Teranscribe_main",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -848,
+        0
+      ],
+      "id": "6e72fcaa-eefe-46de-8f13-1e2bd6d42ef5",
+      "name": "Webhook",
+      "webhookId": "3d380d79-941e-4e5e-965a-e4266956a956"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        752,
+        -16
+      ],
+      "id": "24f09173-8200-4f65-bb6d-b082fd4b3e5e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3041cee9-70c7-4b35-b4b1-0e2a0824eaaa",
+              "name": "log_workflow_id",
+              "value": "={{ $workflow.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b43aede0-dc63-4d42-b094-50cb7e08a2e8",
+              "name": "log_execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "eee8651e-d098-4163-a62a-1d965e45fe63",
+              "name": "log_workflow_name",
+              "value": "={{ $workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "c9ba4c96-34cb-4b0c-8280-96b0acbc46ce",
+              "name": "log_node_name",
+              "value": "Edit field",
+              "type": "string"
+            },
+            {
+              "id": "db77b7aa-4ecd-415e-9a80-b0bfec981107",
+              "name": "log_error_cd",
+              "value": "0",
+              "type": "string"
+            },
+            {
+              "id": "0ca14224-e841-40af-8eb1-674934035852",
+              "name": "log_error_type_cd",
+              "value": "OK",
+              "type": "string"
+            },
+            {
+              "id": "898b044a-f1d5-479e-bd00-d589df357f48",
+              "name": "log_error_desc",
+              "value": "Exécution réussie",
+              "type": "string"
+            },
+            {
+              "id": "bb839050-6e88-432a-87f4-6554d55b2d00",
+              "name": "log_data_js",
+              "value": "={}",
+              "type": "string"
+            },
+            {
+              "id": "5f9c929e-f540-4274-96ff-8fd184943ea8",
+              "name": "log_data_creat_dt",
+              "value": "=={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "9077b3bb-680c-4c6f-888e-0214eddcd562",
+              "name": "log_data_updat_dt",
+              "value": "={{ DateTime.fromISO('9999-12-31T00:00:00') }}",
+              "type": "string"
+            },
+            {
+              "id": "a983dcdd-49c7-4054-999d-c8e34ab1e012",
+              "name": "getEmail",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        160
+      ],
+      "id": "230bfb99-7a26-4fa0-87f9-23d2e54e2c78",
+      "name": "Log ok",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "limitWaitTime": true,
+        "resumeAmount": 2,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "06c22065-2baf-4d8b-a8e6-05295537533b",
+      "name": "Wait",
+      "webhookId": "f771db68-09e7-48c2-8cc3-b498a21596f6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "1b01a8ed-f9ed-47c8-949a-322eb038014d",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        -176
+      ],
+      "id": "3c51ee69-2140-455b-9432-b888ad1a0f0d",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Authenticate  NCA Toolkit": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Authenticate  NCA Toolkit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Media": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log ok": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "L8HV2gZ19n9aza5Z",
+    "timezone": "Europe/Paris",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "017c90de-720c-4f7d-be5a-6d0eb80a5caf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fd5a4cd757601a3491f91722185dd0a72691bd6dd9d685efd695c3f8938e728"
+  },
+  "id": "AlMskhH4nAqNzbTW",
+  "tags": []
+}

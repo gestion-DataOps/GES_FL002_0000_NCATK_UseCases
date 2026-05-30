@@ -4,13 +4,14 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "transcripe_n8n",
+        "path": "transcribe_n8n",
+        "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -544,
+        -560,
         -16
       ],
       "id": "19896b19-2e48-4ded-bd74-9564a529ce5f",
@@ -136,6 +137,196 @@
         }
       },
       "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/home/node/.n8n-files/out/{{ $('Webhook').item.json.query.folder }}.zip",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "ff1ccdbf-f8b4-449b-bd00-d6d0ee1114aa",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=http://minio-upload-api:8000/cleanup?folder={{ $('Webhook').item.json.query.folder }}&bucket=nca-toolkit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_url\": \"{{ $('Webhook').item.json.body.response.segments_url }}\",\n  \"filename\": \"{{ $('Webhook').item.json.query.folder }}/Segmentation_{{ $('Webhook').item.json.query.folder }}.json\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        -16
+      ],
+      "id": "4ff5c24c-2f96-443f-95ae-49e4d9e8f8c2",
+      "name": "Suppression du dossier",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cx1K6afyBc5c7dKz",
+          "name": "nca-toolkit"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "url": "=http://minio-upload-api:8000/download-folder?folder={{ $('Webhook').item.json.query.folder }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "a65096bd-0b5e-45c9-a009-20a05e1bffaf",
+      "name": "Création d'un fichier zip"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nfs.unlinkSync('/home/node/.n8n-files/in/'+$('Webhook').first().json.query.folder+'.mp4');\nreturn [{json: {status: 'deleted'}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        -16
+      ],
+      "id": "3a50b16a-52b5-4f56-af34-700b20528339",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3041cee9-70c7-4b35-b4b1-0e2a0824eaaa",
+              "name": "log_workflow_id",
+              "value": "={{ $workflow.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b43aede0-dc63-4d42-b094-50cb7e08a2e8",
+              "name": "log_execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "eee8651e-d098-4163-a62a-1d965e45fe63",
+              "name": "log_workflow_name",
+              "value": "={{ $workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "c9ba4c96-34cb-4b0c-8280-96b0acbc46ce",
+              "name": "log_node_name",
+              "value": "Edit field",
+              "type": "string"
+            },
+            {
+              "id": "db77b7aa-4ecd-415e-9a80-b0bfec981107",
+              "name": "log_error_cd",
+              "value": "0",
+              "type": "string"
+            },
+            {
+              "id": "0ca14224-e841-40af-8eb1-674934035852",
+              "name": "log_error_type_cd",
+              "value": "OK",
+              "type": "string"
+            },
+            {
+              "id": "898b044a-f1d5-479e-bd00-d589df357f48",
+              "name": "log_error_desc",
+              "value": "Exécution réussie",
+              "type": "string"
+            },
+            {
+              "id": "bb839050-6e88-432a-87f4-6554d55b2d00",
+              "name": "log_data_js",
+              "value": "={}",
+              "type": "string"
+            },
+            {
+              "id": "5f9c929e-f540-4274-96ff-8fd184943ea8",
+              "name": "log_data_creat_dt",
+              "value": "=={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "9077b3bb-680c-4c6f-888e-0214eddcd562",
+              "name": "log_data_updat_dt",
+              "value": "={{ DateTime.fromISO('9999-12-31T00:00:00') }}",
+              "type": "string"
+            },
+            {
+              "id": "a983dcdd-49c7-4054-999d-c8e34ab1e012",
+              "name": "getEmail",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1600,
+        -16
+      ],
+      "id": "280d2648-5855-4202-882e-99b76d5a0afa",
+      "name": "Log ok",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Webhook').item.json.query.resumeUrl.replace('localhost', 'n8n') }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"log_workflow_id\": \"{{ $('Log ok').item.json.log_workflow_id }}\",\n  \"log_execution_id\": \"{{ $('Log ok').item.json.log_execution_id }}\",\n  \"log_workflow_name\": \"{{ $('Log ok').item.json.log_workflow_name }}\",\n  \"log_error_cd\": \"{{ $('Log ok').item.json.log_error_cd }}\",\n  \"log_error_type_cd\": \"{{ $('Log ok').item.json.log_error_type_cd }}\",\n  \"log_error_desc\": \"{{ $('Log ok').item.json.log_error_desc }}\",\n  \"log_data_js\": \"{{ $('Log ok').item.json.log_data_js }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1792,
+        -16
+      ],
+      "id": "93dc2b53-c768-417e-96c9-69ede2907764",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        -16
+      ],
+      "id": "f3463a30-ee07-4328-860f-110cce2e0370",
+      "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
@@ -183,14 +374,96 @@
           }
         ]
       ]
+    },
+    "Read/Write Files from Disk1": {
+      "main": [
+        [
+          {
+            "node": "Suppression du dossier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suppression des fichiers à la racine": {
+      "main": [
+        [
+          {
+            "node": "Création d'un fichier zip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Création d'un fichier zip": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suppression du dossier": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Log ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log ok": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "L8HV2gZ19n9aza5Z",
+    "timezone": "Europe/Paris",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "38344fd6-b956-428a-b45c-230e425883f7",
+  "versionId": "788376bb-f081-4505-bf3d-ec02d4ec705b",
   "meta": {
     "instanceId": "6fd5a4cd757601a3491f91722185dd0a72691bd6dd9d685efd695c3f8938e728"
   },

@@ -29,6 +29,13 @@ def ensure_bucket(bucket: str):
         client.make_bucket(bucket)
 
 
+def delete_all_versions(bucket: str, object_name: str):
+    """Supprime toutes les versions d'un objet (versioning activé)"""
+    versions = list(client.list_objects(bucket, prefix=object_name, include_version=True))
+    for v in versions:
+        client.remove_object(bucket, v.object_name, version_id=v.version_id)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -114,7 +121,7 @@ def list_files(bucket: str = Query(default=DEFAULT_BUCKET), prefix: str = Query(
 @app.delete("/delete")
 def delete_file(bucket: str = Query(...), object_name: str = Query(...)):
     try:
-        client.remove_object(bucket, object_name)
+        delete_all_versions(bucket, object_name)
         return {"status": "ok", "deleted": object_name}
     except S3Error as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -125,15 +132,22 @@ def cleanup_folder(
     folder: str = Query(...),
     bucket: str = Query(default=DEFAULT_BUCKET),
 ):
-    """Supprime tous les fichiers d'un dossier"""
+    """Supprime tous les fichiers d'un dossier incluant toutes les versions"""
     try:
-        objects = list(client.list_objects(bucket, prefix=f"{folder}/", recursive=True))
-        if not objects:
+        # Tous les objets dans le dossier avec toutes leurs versions
+        all_versions = list(client.list_objects(bucket, prefix=f"{folder}/", recursive=True, include_version=True))
+
+        # Objet fantôme du dossier lui-même (ex: "mavideo/" ou "mavideo")
+        root_versions = list(client.list_objects(bucket, prefix=folder, recursive=False, include_version=True))
+        phantom = [o for o in root_versions if o.object_name in (f"{folder}/", folder)]
+        all_versions += phantom
+
+        if not all_versions:
             return {"status": "ok", "deleted": [], "message": "Dossier vide ou inexistant"}
 
         deleted = []
-        for obj in objects:
-            client.remove_object(bucket, obj.object_name)
+        for obj in all_versions:
+            client.remove_object(bucket, obj.object_name, version_id=obj.version_id)
             deleted.append(obj.object_name)
 
         return {"status": "ok", "folder": folder, "deleted": deleted, "count": len(deleted)}
@@ -149,11 +163,11 @@ def cleanup_job(
 ):
     """Supprime les fichiers temporaires NCA Toolkit à la racine (par job_id)"""
     try:
-        objects = list(client.list_objects(bucket, recursive=False))
+        all_versions = list(client.list_objects(bucket, recursive=False, include_version=True))
         deleted = []
-        for obj in objects:
+        for obj in all_versions:
             if obj.object_name.startswith(job_id):
-                client.remove_object(bucket, obj.object_name)
+                client.remove_object(bucket, obj.object_name, version_id=obj.version_id)
                 deleted.append(obj.object_name)
 
         return {"status": "ok", "job_id": job_id, "deleted": deleted, "count": len(deleted)}
